@@ -41,3 +41,10 @@ class MnistDataloader(object):
         x_train, y_train = self.read_images_labels(self.training_images_filepath, self.training_labels_filepath)
         x_test, y_test = self.read_images_labels(self.test_images_filepath, self.test_labels_filepath)
         return (x_train, y_train),(x_test, y_test)  
+
+
+training_img_path = "~/Downloads/mnist-dataset/train-images-idx1-ubyte"
+training_label_path = "~/Downloads/mnist-dataset/train-labels-idx1-ubyte"
+
+test_img_path = "~/Downloads/mnist-dataset/t10k-images-idx3-ubyte"
+test_label_path = "~/Downloads/mnist-dataset/t10k-labels-idx3-ubyte"
