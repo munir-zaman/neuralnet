@@ -1,10 +1,10 @@
 import numpy as np
 
-INPUT_SIZE = 16
-OUTPUT_SIZE = 16
+INPUT_SIZE =  784
+OUTPUT_SIZE = 10
 
 # generate layers with random values
-layer_sizes = [INPUT_SIZE, 5, 5, OUTPUT_SIZE]
+layer_sizes = [INPUT_SIZE, 15, OUTPUT_SIZE]
 layers = []
 for i in range(0, len(layer_sizes)):
     if (i != 0) and (i != len(layer_sizes)-1):
