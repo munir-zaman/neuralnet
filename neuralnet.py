@@ -54,7 +54,7 @@ class NeuralNet():
             z = activations[-1] @ self.weights[i] + self.biases[i]
             z_values.append(z)
             activations.append(self.activation_func(z))
-        return activations, z_values
+        return (activations, z_values)
     
     def SGD(self, training_data, epochs, learning_rate, batch_size):
         # training_data should be an array of (x, y) tuples
@@ -93,14 +93,18 @@ class NeuralNet():
         # delta of the last layer
         delta = self.cost_deriv(activations[-1], y) * self.activation_deriv(zs[-1])
         nabla_b[-1] = delta
-        nabla_w[-1] = np.outer(activations[-2], delta)
+        print(delta.shape)
+        print(activations[-2].shape)
+        nabla_w[-1] = activations[-2].reshape(activations[-2].shape[0], 1) @ delta.reshape(1, delta.shape[0])
 
         for i in range(2, self.total_layers):
             z = zs[-i]
             sp = self.activation_deriv(z)
-            delta = (self.weights[-i+1].T @ delta) * sp
+            delta = (delta @ self.weights[-i+1].T) * sp
             nabla_b[-i] = delta
-            nabla_w[-i] = np.outer(activations[-i-1], delta)
+            print(activations[-i-1])
+            nabla_w[-i] = activations[-i-1].reshape(activations[-i-1].shape[0], 1) @ delta.reshape(1, delta.shape[0])
+            # nabla_w[-i] = activations[-i-1] @ delta
         
         return (nabla_w, nabla_b)
     
