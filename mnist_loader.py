@@ -22,6 +22,12 @@ class MnistDataloader(object):
                 raise ValueError('Magic number mismatch, expected 2049, got {}'.format(magic))
             labels = array("B", file.read())        
         
+        vector_labels = []
+        for x in labels:
+            z = np.zeros(10)
+            z[x] = 1
+            vector_labels.append(z)
+
         with open(images_filepath, 'rb') as file:
             magic, size, rows, cols = struct.unpack(">IIII", file.read(16))
             if magic != 2051:
@@ -32,10 +38,10 @@ class MnistDataloader(object):
             images.append([0] * rows * cols)
         for i in range(size):
             img = np.array(image_data[i * rows * cols:(i + 1) * rows * cols])
-            img = img.reshape(28, 28)
-            images[i][:] = img            
-        
-        return images, labels
+            # img = img.reshape(28, 28)
+            images[i][:] = img
+
+        return images, vector_labels
             
     def load_data(self):
         x_train, y_train = self.read_images_labels(self.training_images_filepath, self.training_labels_filepath)
@@ -43,8 +49,8 @@ class MnistDataloader(object):
         return (x_train, y_train),(x_test, y_test)  
 
 
-training_img_path = "~/Downloads/mnist-dataset/train-images.idx1-ubyte"
-training_label_path = "~/Downloads/mnist-dataset/train-labels.idx1-ubyte"
+training_img_path = "/home/munir/Downloads/mnist-dataset/train-images.idx3-ubyte"
+training_label_path = "/home/munir/Downloads/mnist-dataset/train-labels.idx1-ubyte"
 
-test_img_path = "~/Downloads/mnist-dataset/t10k-images.idx3-ubyte"
-test_label_path = "~/Downloads/mnist-dataset/t10k-labels.idx3-ubyte"
+test_img_path = "/home/munir/Downloads/mnist-dataset/t10k-images.idx3-ubyte"
+test_label_path = "/home/munir/Downloads/mnist-dataset/t10k-labels.idx1-ubyte"
