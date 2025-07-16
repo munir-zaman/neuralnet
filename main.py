@@ -13,4 +13,4 @@ training_data = list(zip(training_data_[0], training_data_[1]))
 test_data = list(zip(test_data_[0], test_data_[1]))
 
 mnist_net = net.NeuralNet([28*28, 15, 10])
-mnist_net.SGD(training_data, 300, 3, 50)
+mnist_net.backprop(training_data[0][0], training_data[0][1])

@@ -19,105 +19,87 @@ def mse_loss_deriv(y_pred, y_true):
     return (y_pred - y_true)
 
 
+def list2rowvector(l):
+    arr = np.array(l)
+    arr.resize(1, arr.size)
+    return arr
+
+def list2colvector(l):
+    arr = np.array(l)
+    arr.resize(arr.size, 1)
+    return arr
+
+def vector2list(arr):
+    l = arr.reshape(arr.size)
+    return l
+
 class NeuralNet():
-    def __init__(self, layer_sizes, 
+    def __init__(self,
+                 layer_sizes,
                  activation_func = sigmoid, 
                  activation_deriv = sigmoid_deriv, 
                  cost_func = mse_loss,
                  cost_deriv = mse_loss_deriv):
         
         self.total_layers = len(layer_sizes)
-
-        # init weights and biases
-
-        # weights[i] is the wieght from layer[i] to layer[i+1]
-        # if w = weights[i], 
-        # then w[j][k] is the weight between j-th neuron in layer[i] and k-th neuron in layer[i+1]
-        # which means the weight matrix here is **transposed**
-        self.weights = [np.random.rand(layer_sizes[i], layer_sizes[i+1]) for i in range(self.total_layers-1)]
-
-        # biases[i] is the bias for layer[i+1]
-        self.biases = [np.random.rand(size) for size in layer_sizes[1:]] # ignore the first (input) layer
-
-        # activation function
-        # uses sigmoid by default
         self.activation_func = activation_func
         self.activation_deriv = activation_deriv
-        # uses mse by default
         self.cost_func = cost_func
         self.cost_deriv = cost_deriv
 
-    def feedforward(self, input):
-        activations = [input]
-        z_values = []
-        for i in range(self.total_layers-1):
-            z = activations[-1] @ self.weights[i] + self.biases[i]
-            z_values.append(z)
-            activations.append(self.activation_func(z))
-        return (activations, z_values)
+        # randomly initilize weights and biases
+
+        # weights are transposed 
+        # shape of w[i] = (layer_sizes[i], layer_size[i+1])
+        # w_l is w[l-1]
+        self.weights = [np.random.rand(layer_sizes[i], layer_sizes[i+1]) for i in range(self.total_layers-1)]
+        # biases are also transposed
+        # shape of b[i] = (1, layer_szie[i+1])
+        # b_l is b[l-1]
+        self.biases = [np.random.rand(1, n) for n in layer_sizes[1:]]
+
+        # NOTE: since everything is transposed, remember to change the order of operation
+        # for matrix multiplication e.g. do a @ W instead of W @ a
+
+    def forwardpass(self, input):
+        # a_l is a[l]
+        activations = [0]*self.total_layers
+        activations[0] = list2rowvector(input)
+
+        # z_l is z[l-1]
+        z_values = [0]*(self.total_layers-1)
+
+        for l in range(1, self.total_layers):
+            # z_l = a_(l-1) @ w_l + b_l
+            z_values[l-1] = activations[l-1] @ self.weights[l-1] + self.biases[l-1]
+            activations[l] = self.activation_func(z_values[l-1])
+
+        return activations, z_values
     
-    def SGD(self, training_data, epochs, learning_rate, batch_size):
-        # training_data should be an array of (x, y) tuples
-        # where x is the input vector and y is desired output vector
-        # epochs is the number of times to train
-        n = len(training_data)
-        for i in range(epochs):
-            # shuffle the data for each iteration
-            random.shuffle(training_data)
-            # create batches
-            batches = [training_data[k:k+batch_size] for k in range(0, n, batch_size)]
-            for batch in batches:
-                self.learn(batch, learning_rate)
-
-    def learn(self, batch, learning_rate = 0.1):
-        nabla_b = [np.zeros(b.shape) for b in self.biases]
-        nabla_w = [np.zeros(w.shape) for w in self.weights]
-
-        for x, y in batch:
-            delta_w, delta_b = self.backprop(x, y)
-            nabla_w = [nw + dw for nw, dw in zip(nabla_w, delta_w)]
-            nabla_b = [nb + db for nb, db in zip(nabla_b, delta_b)]
-
-        self.weights = [w - learning_rate * (dw / len(batch)) for w, dw in zip(self.weights, nabla_w)]
-        self.biases = [b - learning_rate * (db / len(batch)) for b, db in zip(self.biases, nabla_b)]
-
     def backprop(self, x, y):
         # x is the input
         # y is the desired output
-        
+
         # corrections
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
 
-        activations, zs = self.feedforward(x)
-        # delta of the last layer
+        activations, zs = self.forwardpass(x)
+
+        # NOTE: consider the shape of x and y
+        # we dont need to turn y into a row vector
+        
+        # the delta for the last layer
         delta = self.cost_deriv(activations[-1], y) * self.activation_deriv(zs[-1])
         nabla_b[-1] = delta
-        print(delta.shape)
-        print(activations[-2].shape)
-        nabla_w[-1] = activations[-2].reshape(activations[-2].shape[0], 1) @ delta.reshape(1, delta.shape[0])
+        nabla_w[-1] = activations[-2].T @ delta
 
+        # move backward
         for i in range(2, self.total_layers):
             z = zs[-i]
-            sp = self.activation_deriv(z)
-            delta = (delta @ self.weights[-i+1].T) * sp
+            deriv_z = self.activation_deriv(z)
+            delta = (delta @ self.weights[-i+1].T) * deriv_z
             nabla_b[-i] = delta
-            print(activations[-i-1])
-            nabla_w[-i] = activations[-i-1].reshape(activations[-i-1].shape[0], 1) @ delta.reshape(1, delta.shape[0])
-            # nabla_w[-i] = activations[-i-1] @ delta
-        
+            nabla_w[-i] = activations[-i-1].T @ delta
+
         return (nabla_w, nabla_b)
-    
-    def predict(self, x):
-        activations, _ = self.feedforward(x)
-        return activations[-1]
-
-    def evaluate(self, test_data):
-        correct = 0
-        for x, y in test_data:
-            pred = np.argmax(self.predict(x))
-            target = np.argmax(y)
-            if pred == target:
-                correct += 1
-        return correct / len(test_data)
-
