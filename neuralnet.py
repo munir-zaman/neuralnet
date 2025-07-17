@@ -106,23 +106,16 @@ class NeuralNet():
         nabla_w[-1] = activations[-2].T @ delta
 
         # move backward
-        ## print(self.total_layers)
         for i in range(2, self.total_layers):
             z = zs[-i]
             deriv_z = self.activation_deriv(z)
-            ## print(z)
-            ## print(deriv_z)
             delta = (delta @ self.weights[-i+1].T) * deriv_z
-            ## print(delta)
             nabla_b[-i] = delta
             nabla_w[-i] = activations[-i-1].T @ delta
 
-##        print(len(self.weights))
-##        print(nabla_b[0])
         return (nabla_w, nabla_b)
     
     def learn(self, batch, learning_rate = 3):
-        prev_w = self.weights[0].copy()
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
 
@@ -136,7 +129,6 @@ class NeuralNet():
         self.biases = [b-(learning_rate/len(batch))*nb
                         for b, nb in zip(self.biases, nabla_b)]
 
-        ## print(self.weights[0] - prev_w)
 
     def SGD(self, training_data, epochs, learning_rate, batch_size):
         # training_data should be an array of (x, y) tuples
