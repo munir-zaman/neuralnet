@@ -6,6 +6,7 @@ from os.path  import join
 # https://www.kaggle.com/code/hojjatk/read-mnist-dataset
 # MNIST Data Loader Class
 #
+
 class MnistDataloader(object):
     def __init__(self, training_images_filepath,training_labels_filepath,
                  test_images_filepath, test_labels_filepath):
@@ -37,7 +38,7 @@ class MnistDataloader(object):
         for i in range(size):
             images.append([0] * rows * cols)
         for i in range(size):
-            img = np.array(image_data[i * rows * cols:(i + 1) * rows * cols])
+            img = np.array(image_data[i * rows * cols:(i + 1) * rows * cols]) / 255
             # img = img.reshape(28, 28)
             images[i][:] = img
 

@@ -1,21 +1,22 @@
 import numpy as np
 import random
+import pickle
 
 def sigmoid(z):
-    return 1/(1 + np.exp(-z))
+    return 1.0/(1.0 + np.exp(-z))
 
 def sigmoid_deriv(z):
     sz = sigmoid(z)
-    return sz * (1 - sz)
+    return sz * (1.0 - sz)
 
 def softmax(x):
     exps = np.exp(x - np.max(x))
     return exps / np.sum(exps)
 
-def mse_loss(y_pred, y_true):
+def mseloss(y_pred, y_true):
     return np.mean((y_pred - y_true)**2)/2
 
-def mse_loss_deriv(y_pred, y_true):
+def mseloss_deriv(y_pred, y_true):
     return (y_pred - y_true)
 
 
@@ -38,9 +39,10 @@ class NeuralNet():
                  layer_sizes,
                  activation_func = sigmoid, 
                  activation_deriv = sigmoid_deriv, 
-                 cost_func = mse_loss,
-                 cost_deriv = mse_loss_deriv):
+                 cost_func = mseloss,
+                 cost_deriv = mseloss_deriv):
         
+        self.layer_size = layer_sizes
         self.total_layers = len(layer_sizes)
         self.activation_func = activation_func
         self.activation_deriv = activation_deriv
@@ -59,15 +61,23 @@ class NeuralNet():
         self.biases = [np.random.rand(1, n) for n in layer_sizes[1:]]
 
         # NOTE: since everything is transposed, remember to change the order of operation
-        # for matrix multiplication e.g. do a @ W instead of W @ a
+        # for matrix multiplications e.g. do a @ W instead of W @ a
+    
+    def save_model(self, filename):
+        with open(filename, 'wb') as f:
+            pickle.dump((self.weights, self.biases), f)
+
+    def load_model(self, filename):
+        with open(filename, 'rb') as f:
+            self.weights, self.biases = pickle.load(f)
 
     def forwardpass(self, input):
         # a_l is a[l]
-        activations = [0]*self.total_layers
+        activations = [np.zeros((n, 1)) for n in self.layer_size]
         activations[0] = list2rowvector(input)
 
         # z_l is z[l-1]
-        z_values = [0]*(self.total_layers-1)
+        z_values = [np.zeros((n, 1)) for n in self.layer_size[1:]]
 
         for l in range(1, self.total_layers):
             # z_l = a_(l-1) @ w_l + b_l
@@ -84,6 +94,7 @@ class NeuralNet():
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
 
+        # forwardpass
         activations, zs = self.forwardpass(x)
 
         # NOTE: consider the shape of x and y
@@ -95,11 +106,47 @@ class NeuralNet():
         nabla_w[-1] = activations[-2].T @ delta
 
         # move backward
+        ## print(self.total_layers)
         for i in range(2, self.total_layers):
             z = zs[-i]
             deriv_z = self.activation_deriv(z)
+            ## print(z)
+            ## print(deriv_z)
             delta = (delta @ self.weights[-i+1].T) * deriv_z
+            ## print(delta)
             nabla_b[-i] = delta
             nabla_w[-i] = activations[-i-1].T @ delta
 
+##        print(len(self.weights))
+##        print(nabla_b[0])
         return (nabla_w, nabla_b)
+    
+    def learn(self, batch, learning_rate = 3):
+        prev_w = self.weights[0].copy()
+        nabla_b = [np.zeros(b.shape) for b in self.biases]
+        nabla_w = [np.zeros(w.shape) for w in self.weights]
+
+        for x, y in batch:
+            delta_w, delta_b = self.backprop(x, y)
+            nabla_b = [nb + db for nb, db in zip(nabla_b, delta_b)]
+            nabla_w = [nw + dw for nw, dw in zip(nabla_w, delta_w)]
+        
+        self.weights = [w-(learning_rate/len(batch))*nw
+                        for w, nw in zip(self.weights, nabla_w)]
+        self.biases = [b-(learning_rate/len(batch))*nb
+                        for b, nb in zip(self.biases, nabla_b)]
+
+        ## print(self.weights[0] - prev_w)
+
+    def SGD(self, training_data, epochs, learning_rate, batch_size):
+        # training_data should be an array of (x, y) tuples
+        # where x is the input vector and y is desired output vector
+        # epochs is the number of times to train
+        n = len(training_data)
+        for i in range(epochs):
+            # shuffle the data for each iteration
+            random.shuffle(training_data)
+            # create batches
+            batches = [training_data[k:k+batch_size] for k in range(0, n, batch_size)]
+            for batch in batches:
+                self.learn(batch, learning_rate)
