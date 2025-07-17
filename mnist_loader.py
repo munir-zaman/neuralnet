@@ -27,7 +27,7 @@ class MnistDataloader(object):
         for x in labels:
             z = np.zeros(10)
             z[x] = 1
-            vector_labels.append(z)
+            vector_labels.append(z.reshape(1, 10))
 
         with open(images_filepath, 'rb') as file:
             magic, size, rows, cols = struct.unpack(">IIII", file.read(16))

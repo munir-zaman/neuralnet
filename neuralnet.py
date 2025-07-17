@@ -22,12 +22,12 @@ def mseloss_deriv(y_pred, y_true):
 
 def list2rowvector(l):
     arr = np.array(l)
-    arr.resize(1, arr.size)
+    arr = arr.reshape(1, arr.size)
     return arr
 
 def list2colvector(l):
     arr = np.array(l)
-    arr.resize(arr.size, 1)
+    arr = arr.reshape(arr.size, 1)
     return arr
 
 def vector2list(arr):
@@ -54,11 +54,11 @@ class NeuralNet():
         # weights are transposed 
         # shape of w[i] = (layer_sizes[i], layer_size[i+1])
         # w_l is w[l-1]
-        self.weights = [np.random.rand(layer_sizes[i], layer_sizes[i+1]) for i in range(self.total_layers-1)]
+        self.weights = [np.random.randn(layer_sizes[i], layer_sizes[i+1]) for i in range(self.total_layers-1)]
         # biases are also transposed
         # shape of b[i] = (1, layer_szie[i+1])
         # b_l is b[l-1]
-        self.biases = [np.random.rand(1, n) for n in layer_sizes[1:]]
+        self.biases = [np.random.randn(1, n) for n in layer_sizes[1:]]
 
         # NOTE: since everything is transposed, remember to change the order of operation
         # for matrix multiplications e.g. do a @ W instead of W @ a
@@ -73,11 +73,11 @@ class NeuralNet():
 
     def forwardpass(self, input):
         # a_l is a[l]
-        activations = [np.zeros((n, 1)) for n in self.layer_size]
+        activations = [np.zeros((1, n)) for n in self.layer_size]
         activations[0] = list2rowvector(input)
 
         # z_l is z[l-1]
-        z_values = [np.zeros((n, 1)) for n in self.layer_size[1:]]
+        z_values = [np.zeros((1, n)) for n in self.layer_size[1:]]
 
         for l in range(1, self.total_layers):
             # z_l = a_(l-1) @ w_l + b_l
@@ -142,3 +142,9 @@ class NeuralNet():
             batches = [training_data[k:k+batch_size] for k in range(0, n, batch_size)]
             for batch in batches:
                 self.learn(batch, learning_rate)
+
+    def evaluate(self, test_data):
+        test_results = [(np.argmax(self.forwardpass(x)[0][-1]), np.argmax(y)) for x, y in test_data]
+        correct = sum(int(pred == label) for pred, label in test_results)
+        print(f"Accuracy: {correct}/{len(test_data)} ({100 * correct / len(test_data):.2f}%)")
+        return correct
