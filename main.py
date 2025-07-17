@@ -9,10 +9,8 @@ mnist = loader.MnistDataloader(
     loader.test_label_path,
 )
 
-training_data_, test_data_ = mnist.load_data()
-training_data = list(zip(training_data_[0], training_data_[1]))
-test_data = list(zip(test_data_[0], test_data_[1]))
+training_data, test_data = mnist.load_data()
 
 mnist_net = net.NeuralNet([28*28, 15, 10])
 mnist_net.SGD(training_data, 30, 3, 10)
-mnist_net.save_model("mnist_model_001.pkl")
+mnist_net.save_model("mnist_model_test_001.pkl")

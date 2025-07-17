@@ -35,19 +35,21 @@ class MnistDataloader(object):
                 raise ValueError('Magic number mismatch, expected 2051, got {}'.format(magic))
             image_data = array("B", file.read())        
         images = []
-        for i in range(size):
-            images.append([0] * rows * cols)
+#        for i in range(size):
+#            images.append([0] * rows * cols)
         for i in range(size):
             img = np.array(image_data[i * rows * cols:(i + 1) * rows * cols]) / 255
             # img = img.reshape(28, 28)
-            images[i][:] = img
+            images.append(img)
 
         return images, vector_labels
             
     def load_data(self):
         x_train, y_train = self.read_images_labels(self.training_images_filepath, self.training_labels_filepath)
         x_test, y_test = self.read_images_labels(self.test_images_filepath, self.test_labels_filepath)
-        return (x_train, y_train),(x_test, y_test)  
+        training_data = list(zip(x_train, y_train))
+        test_data = list(zip(x_test, y_test))
+        return  training_data, test_data
 
 
 training_img_path = "/home/munir/Downloads/mnist-dataset/train-images.idx3-ubyte"
