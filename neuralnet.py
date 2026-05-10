@@ -133,10 +133,16 @@ class NeuralNet():
         return (nabla_w, nabla_b)
     
     def learn(self, batch, learning_rate = 3):
+        """
+            compute average nabla for a batch of training data and 
+            use that to update wieghts and biases.
+        """
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
 
         for x, y in batch:
+            # can i somehow parallelize this?
+            # maybe use threads? or maybe cuda?
             delta_w, delta_b = self.backprop(x, y)
             nabla_b = [nb + db for nb, db in zip(nabla_b, delta_b)]
             nabla_w = [nw + dw for nw, dw in zip(nabla_w, delta_w)]
@@ -148,9 +154,11 @@ class NeuralNet():
 
 
     def SGD(self, training_data, epochs, learning_rate, batch_size):
-        # training_data should be an array of (x, y) tuples
-        # where x is the input vector and y is desired output vector
-        # epochs is the number of times to train
+        """
+            `training_data` should be an array of `(x, y)` tuples
+            where `x` is the input vector and `y` is desired output vector
+            `epochs` is the number of times to train
+        """
         n = len(training_data)
         for i in range(epochs):
             # shuffle the data for each iteration
