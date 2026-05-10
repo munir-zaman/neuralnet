@@ -119,6 +119,8 @@ class NeuralNet():
                 np.resize(arr, (1, 28*28)) # resize
                 print(np.argmax(mnist_net.forwardpass(arr)[0][-1])) # print the output
         """
+        # NOTE: Can we vectorize this?
+
         # a_l is a[l]
         activations = [np.zeros((1, n)) for n in self.layer_size]
         activations[0] = list2rowvector(input)
@@ -133,11 +135,16 @@ class NeuralNet():
 
         # apply softmax on the last layer
         # to turn this into a probability distribution
-        softmax(activations[-1])
+        activations[-1] = softmax(activations[-1]) # :P
 
         return activations, z_values
     
     def backprop_delta(self, activations, zs, y):
+        """
+            this method is used to compute deltas for given activations, z values and y (target)
+            it returns a list of deltas of length (self.total_layers - 1) where the i th element 
+            is the delta for the i+1 th activation
+        """
         # the delta for the last layer
         delta = [np.array([])] * (self.total_layers - 1)
         delta[-1] = self.cost_deriv(activations[-1], y) * self.activation_deriv(zs[-1])
@@ -148,6 +155,20 @@ class NeuralNet():
             delta[-i] = (delta[-i + 1] @ self.weights[-i + 1].T) * deriv_z
 
         return delta
+    
+    def backprop_w(self, activations, delta):
+        """
+            computes nabla_w from given activations and deltas, assuming 
+            the deltas are computed from the given activations
+        """
+        nabla_w = [np.zeros(w.shape) for w in self.weights]
+        # compute nabla_w
+        for i in range(1, self.total_layers):
+            nabla_w[-i] = activations[-i-1].T @ delta[-i]
+        return nabla_w
+
+    def backprop_b(self, activations, zs, y):
+        return self.backprop_delta(activations=activations, zs=zs, y=y)
 
     def backprop(self, x, y):
         """
@@ -159,24 +180,13 @@ class NeuralNet():
         # x is the input
         # y is the desired output
 
-        # corrections
-        nabla_b = [np.zeros(b.shape) for b in self.biases]
-        nabla_w = [np.zeros(w.shape) for w in self.weights]
-
-        # forwardpass
+        # forwardpass the input to get activations and zs
         activations, zs = self.forwardpass(x)
-        # get the deltas
-        delta = self.backprop_delta(activations, zs, y)
 
-        # NOTE: consider the shape of x and y
-        # we dont need to turn y into a row vector
-        
+        # corrections
+        delta = self.backprop_delta(activations=activations, zs=zs, y=y)
+        nabla_w = self.backprop_w(activations=activations, delta=delta)
         nabla_b = delta
-        nabla_w[-1] = activations[-2].T @ delta[-1]
-
-        # move backward
-        for i in range(2, self.total_layers):
-            nabla_w[-i] = activations[-i-1].T @ delta[-i]
 
         return (nabla_w, nabla_b)
     
@@ -188,11 +198,6 @@ class NeuralNet():
         """
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
-
-        # array_backprop = lambda batch : [self.backprop(b[0], b[1]) for b in batch]
-        # delta_w, delta_b = array_backprop(batch)
-        # nabla_b = np.sum(delta_b)
-        # nabla_w = np.sum(delta_w)
         
         for x, y in batch:
             # can i somehow parallelize this?
