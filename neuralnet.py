@@ -13,12 +13,28 @@ def softmax(x):
     exps = np.exp(x - np.max(x))
     return exps / np.sum(exps)
 
+# loss functions 
+# and their derivatives with respect to activation (or y_pred)
+
+# mse loss
+
 def mseloss(y_pred, y_true):
     return np.mean((y_pred - y_true)**2)/2
 
 def mseloss_deriv(y_pred, y_true):
     return (y_pred - y_true)
 
+# cross entropy
+
+# adding this to y_pred 
+# so we dont get divide by zero T.T
+y_pred_epsilon = 0.00001
+
+def cross_entropy(y_pred, y_true):
+    return - ( y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred) )
+
+def cross_entropy_deriv(y_pred, y_true):
+    return - ( y_true / (y_pred + y_pred_epsilon) - (1 - y_true) / (1 - y_pred + y_pred_epsilon) )
 
 def list2rowvector(l):
     arr = np.array(l)
@@ -39,8 +55,8 @@ class NeuralNet():
                  layer_sizes,
                  activation_func = sigmoid, 
                  activation_deriv = sigmoid_deriv, 
-                 cost_func = mseloss,
-                 cost_deriv = mseloss_deriv):
+                 cost_func = cross_entropy,
+                 cost_deriv = cross_entropy_deriv):
         
         self.layer_size = layer_sizes
         self.total_layers = len(layer_sizes)

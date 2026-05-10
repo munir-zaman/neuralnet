@@ -13,10 +13,10 @@ training_data, test_data = mnist.load_data()
 
 mnist_net = net.NeuralNet([28*28, 15, 10])
 
-def train():
+def train(modelname : str):
     mnist_net.SGD(training_data, 30, 3, 10)
-    mnist_net.save_model("mnist_model_001.pkl")
+    mnist_net.save_model(modelname)
 
-def test():
-    mnist_net.load_model("mnist_model_001.pkl")
+def test(modelname : str):
+    mnist_net.load_model(modelname)
     mnist_net.evaluate(test_data[:1000])
