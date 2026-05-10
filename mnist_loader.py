@@ -52,8 +52,8 @@ class MnistDataloader(object):
         return  training_data, test_data
 
 
-training_img_path = "/home/munir/Downloads/mnist-dataset/train-images.idx3-ubyte"
-training_label_path = "/home/munir/Downloads/mnist-dataset/train-labels.idx1-ubyte"
+training_img_path = "mnist-dataset/train-images.idx3-ubyte"
+training_label_path = "mnist-dataset/train-labels.idx1-ubyte"
 
-test_img_path = "/home/munir/Downloads/mnist-dataset/t10k-images.idx3-ubyte"
-test_label_path = "/home/munir/Downloads/mnist-dataset/t10k-labels.idx1-ubyte"
+test_img_path = "mnist-dataset/t10k-images.idx3-ubyte"
+test_label_path = "mnist-dataset/t10k-labels.idx1-ubyte"
