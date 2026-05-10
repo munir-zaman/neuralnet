@@ -64,16 +64,23 @@ class NeuralNet():
         # for matrix multiplications e.g. do a @ W instead of W @ a
     
     def save_model(self, filename):
+        """
+            uses pickle to save the weights and biases to a file
+        """
         with open(filename, 'wb') as f:
             pickle.dump((self.weights, self.biases), f)
 
     def load_model(self, filename):
+        """
+            uses pickle to load saved weights and biases from a file
+        """
         with open(filename, 'rb') as f:
             self.weights, self.biases = pickle.load(f)
 
     def forwardpass(self, input):
         """
-            `input` should be a flattened array of shape (1, 28*28) with values between 0 and 1 (normalized). 
+            `input` should be a flattened array of shape (1, 28*28) (assuming we are working with MNIST) 
+            with values between 0 and 1 (normalized). 
             this method outputs a tuple containing activation and z_values respectively
 
             Example usage:
@@ -134,8 +141,9 @@ class NeuralNet():
     
     def learn(self, batch, learning_rate = 3):
         """
-            compute average nabla for a batch of training data and 
+            compute average nabla (nabla_w and nabla_b) for a batch of training data and 
             use that to update wieghts and biases.
+            default learning rate is set to 3.
         """
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
@@ -147,9 +155,9 @@ class NeuralNet():
             nabla_b = [nb + db for nb, db in zip(nabla_b, delta_b)]
             nabla_w = [nw + dw for nw, dw in zip(nabla_w, delta_w)]
         
-        self.weights = [w-(learning_rate/len(batch))*nw
+        self.weights = [w - (learning_rate / len(batch)) * nw
                         for w, nw in zip(self.weights, nabla_w)]
-        self.biases = [b-(learning_rate/len(batch))*nb
+        self.biases = [b - (learning_rate / len(batch)) * nb
                         for b, nb in zip(self.biases, nabla_b)]
 
 
