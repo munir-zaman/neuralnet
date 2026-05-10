@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import random
 import pickle
 
@@ -10,7 +11,7 @@ def sigmoid_deriv(z):
     return sz * (1.0 - sz)
 
 def softmax(x):
-    exps = np.exp(x - np.max(x))
+    exps = np.exp(x)
     return exps / np.sum(exps)
 
 # loss functions 
@@ -22,19 +23,31 @@ def mseloss(y_pred, y_true):
     return np.mean((y_pred - y_true)**2)/2
 
 def mseloss_deriv(y_pred, y_true):
+    """
+        returns an array containing the derivatives of the loss function 
+        with respect to each activation
+    """
     return (y_pred - y_true)
 
 # cross entropy
 
 # adding this to y_pred 
-# so we dont get divide by zero T.T
+# so we dont get dividsion by zero T.T
 y_pred_epsilon = 0.00001
 
 def cross_entropy(y_pred, y_true):
-    return - ( y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred) )
+    return - np.sum ( ( y_true * np.log(y_pred + y_pred_epsilon) 
+                        + (1 - y_true) * np.log(1 - y_pred + y_pred_epsilon) ) )
 
 def cross_entropy_deriv(y_pred, y_true):
-    return - ( y_true / (y_pred + y_pred_epsilon) - (1 - y_true) / (1 - y_pred + y_pred_epsilon) )
+    """
+        returns an array containing the derivatives of the loss function 
+        with respect to each activation
+    """
+    return - ( y_true / (y_pred + y_pred_epsilon) 
+                - (1 - y_true) / (1 - y_pred + y_pred_epsilon) )
+
+# some helper functions
 
 def list2rowvector(l):
     arr = np.array(l)
@@ -118,6 +131,10 @@ class NeuralNet():
             z_values[l-1] = activations[l-1] @ self.weights[l-1] + self.biases[l-1]
             activations[l] = self.activation_func(z_values[l-1])
 
+        # apply softmax on the last layer
+        # to turn this into a probability distribution
+        softmax(activations[-1])
+
         return activations, z_values
     
     def backprop(self, x, y):
@@ -176,7 +193,6 @@ class NeuralNet():
         self.biases = [b - (learning_rate / len(batch)) * nb
                         for b, nb in zip(self.biases, nabla_b)]
 
-
     def SGD(self, training_data, epochs, learning_rate, batch_size):
         """
             `training_data` should be an array of `(x, y)` tuples
@@ -197,3 +213,14 @@ class NeuralNet():
         correct = sum(int(pred == label) for pred, label in test_results)
         print(f"Accuracy: {correct}/{len(test_data)} ({100 * correct / len(test_data):.2f}%)")
         return correct
+    
+    def evaluate_and_print(self, test_data):
+        """
+            for debug purposes
+        """
+        for x, y in test_data:
+            pred = self.forwardpass(x)[0][-1]
+            curr_cost = self.cost_func(pred, y)
+            print(pred, y, curr_cost)
+            print(np.argmax(pred), np.argmax(y))
+            print(np.sum(pred))
