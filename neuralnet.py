@@ -72,6 +72,17 @@ class NeuralNet():
             self.weights, self.biases = pickle.load(f)
 
     def forwardpass(self, input):
+        """
+            `input` should be a flattened array of shape (1, 28*28) with values between 0 and 1 (normalized). 
+            this method outputs a tuple containing activation and z_values respectively
+
+            Example usage:
+            ==============
+                img = Image.open(f"../my-test/two.bmp").convert('L')  # force 8-bit grayscale
+                arr = np.array(img).astype(np.float64) / 255.0 # normalize rgb values
+                np.resize(arr, (1, 28*28)) # resize
+                print(np.argmax(mnist_net.forwardpass(arr)[0][-1])) # print the output
+        """
         # a_l is a[l]
         activations = [np.zeros((1, n)) for n in self.layer_size]
         activations[0] = list2rowvector(input)
@@ -87,6 +98,12 @@ class NeuralNet():
         return activations, z_values
     
     def backprop(self, x, y):
+        """
+            `x` is passed to `self.forwardpass` to get the activations and z_values for x. 
+            see `self.forwardpass` for what the input `x` should be.
+
+            this method outputs a tuple containing nabla_w and nabla_b respectively.
+        """
         # x is the input
         # y is the desired output
 
