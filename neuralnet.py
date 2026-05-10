@@ -137,6 +137,18 @@ class NeuralNet():
 
         return activations, z_values
     
+    def backprop_delta(self, activations, zs, y):
+        # the delta for the last layer
+        delta = [np.array([])] * (self.total_layers - 1)
+        delta[-1] = self.cost_deriv(activations[-1], y) * self.activation_deriv(zs[-1])
+        # move backward
+        for i in range(2, self.total_layers):
+            z = zs[-i]
+            deriv_z = self.activation_deriv(z)
+            delta[-i] = (delta[-i + 1] @ self.weights[-i + 1].T) * deriv_z
+
+        return delta
+
     def backprop(self, x, y):
         """
             `x` is passed to `self.forwardpass` to get the activations and z_values for x. 
@@ -153,22 +165,18 @@ class NeuralNet():
 
         # forwardpass
         activations, zs = self.forwardpass(x)
+        # get the deltas
+        delta = self.backprop_delta(activations, zs, y)
 
         # NOTE: consider the shape of x and y
         # we dont need to turn y into a row vector
         
-        # the delta for the last layer
-        delta = self.cost_deriv(activations[-1], y) * self.activation_deriv(zs[-1])
-        nabla_b[-1] = delta
-        nabla_w[-1] = activations[-2].T @ delta
+        nabla_b = delta
+        nabla_w[-1] = activations[-2].T @ delta[-1]
 
         # move backward
         for i in range(2, self.total_layers):
-            z = zs[-i]
-            deriv_z = self.activation_deriv(z)
-            delta = (delta @ self.weights[-i+1].T) * deriv_z
-            nabla_b[-i] = delta
-            nabla_w[-i] = activations[-i-1].T @ delta
+            nabla_w[-i] = activations[-i-1].T @ delta[-i]
 
         return (nabla_w, nabla_b)
     
@@ -181,6 +189,11 @@ class NeuralNet():
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
 
+        # array_backprop = lambda batch : [self.backprop(b[0], b[1]) for b in batch]
+        # delta_w, delta_b = array_backprop(batch)
+        # nabla_b = np.sum(delta_b)
+        # nabla_w = np.sum(delta_w)
+        
         for x, y in batch:
             # can i somehow parallelize this?
             # maybe use threads? or maybe cuda?
